@@ -21,6 +21,14 @@ A modern, high-performance GUI tool for `yt-dlp` built with **C#** and **.NET 10
 
 ---
 
+## 📖 How to Use
+
+1.  **Paste URL**: Enter the video or playlist link into the URL input box.
+2.  **Choose Quality**: Select your preferred resolution from the dropdown menu.
+3.  **Download**: Click **Download Now**. The button will toggle to **Stop Download** while the process is running.
+4.  **Manage Files**: Once finished, click **Open Downloads Folder** to access your media.
+
+---
 ## 🛠️ Build and Installation
 
 ### Prerequisites
@@ -33,14 +41,6 @@ To build a standalone, zero-dependency version that runs on any 64-bit Windows m
 ```bash
 dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o ./PortableApp
 ```
-
-
-## 📖 How to Use
-
-1.  **Paste URL**: Enter the video or playlist link into the URL input box.
-2.  **Choose Quality**: Select your preferred resolution from the dropdown menu.
-3.  **Download**: Click **Download Now**. The button will toggle to **Stop Download** while the process is running.
-4.  **Manage Files**: Once finished, click **Open Downloads Folder** to access your media.
 
 
 
