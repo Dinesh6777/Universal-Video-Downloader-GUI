@@ -3,7 +3,8 @@
 ![License](https://img.shields.io/badge/license-GPLv3-blue.svg)
 ![.NET](https://img.shields.io/badge/.NET-10.0-purple.svg)
 
-A modern, high-performance GUI tool for `yt-dlp` built with **C#** and **.NET 10 (WPF)** . This utility provides a seamless way to download high-quality videos or entire playlists from YouTube, Facebook, and hundreds of other supported platforms.
+A portable, modern and simplistic graphical interface for the command line tool `yt-dlp` built with **C#** and **.NET 10 (WPF)** .
+This utility provides a seamless way to download high-quality videos or entire playlists from YouTube, Facebook, and hundreds of other supported platforms.
 
 <img width="572" height="442" alt="image" src="https://github.com/user-attachments/assets/0670f6a5-ac26-4f9f-893e-85647eaf2795" />
 
