@@ -13,7 +13,7 @@ This utility provides a seamless way to download high-quality videos or entire p
 ---
 ## 🚀 Key Features
 
-*   **Universal Platform Support**: Leverages the power of `yt-dlp` to download media from almost any video-sharing site.
+*   **Multi-platform support** - Download from YouTube, Vimeo, Facebook, Instagram, TikTok, and 1000+ sites. Leverages the power of `yt-dlp` to download media from almost any video-sharing site.
 *   **Intelligent Playlist Handling**: Automatically creates a dedicated subfolder for playlists and prefixes files with their index for perfect organization.
 *   **Manual Control**: Features a dedicated "Stop Download" button that safely terminates the process tree, including active FFmpeg merges.
 *   **Batch Downloading**: Supports a multi-line input field where you can paste a list of URLs or even full playlist links.
