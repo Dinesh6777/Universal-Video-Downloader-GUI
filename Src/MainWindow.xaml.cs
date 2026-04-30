@@ -40,11 +40,11 @@ public partial class MainWindow : Window
             var psi = new ProcessStartInfo { FileName = "ffmpeg", Arguments = "-version", CreateNoWindow = true, UseShellExecute = false };
             using var proc = Process.Start(psi);
             if (proc != null) await proc.WaitForExitAsync();
-            Log("✅ FFmpeg detected. High-quality merging and MP3 conversion enabled.");
+            Log("✅ FFmpeg detected.");
         }
         catch
         {
-            Log("⚠️ FFmpeg NOT detected! Downloads may fail to merge or convert to MP3.");
+            Log("⚠️ FFmpeg NOT detected! MP3 and high-res merging may fail.");
         }
     }
 
@@ -74,15 +74,14 @@ public partial class MainWindow : Window
 
         if (shouldUpdate)
         {
-            Log("Checking for yt-dlp updates...");
+            Log("Checking for updates...");
             try
             {
                 var proc = Process.Start(new ProcessStartInfo { FileName = _ytDlpPath, Arguments = "--update", CreateNoWindow = true, UseShellExecute = false });
                 if (proc != null) await proc.WaitForExitAsync();
                 await File.WriteAllTextAsync(_updateCheckPath, DateTime.Now.ToString());
-                Log("Update check complete.");
             }
-            catch { Log("Update check skipped."); }
+            catch { Log("Update skipped."); }
         }
     }
 
@@ -93,11 +92,7 @@ public partial class MainWindow : Window
         var urls = UrlInput.Text.Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries)
                                 .Select(u => u.Trim()).Where(u => !string.IsNullOrEmpty(u)).ToList();
 
-        if (!urls.Any())
-        {
-            MessageBox.Show("Please enter at least one URL.");
-            return;
-        }
+        if (!urls.Any()) return;
 
         string quality = (QualityCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "best";
         
@@ -110,8 +105,6 @@ public partial class MainWindow : Window
         for (int i = 0; i < urls.Count; i++)
         {
             if (_stopRequested) break;
-            
-            // Progress tracker update (e.g. 1/10)
             BatchStatus.Text = $"Downloading {i + 1}/{urls.Count} (Remaining: {urls.Count - (i + 1)})";
             PrgBar.Value = 0;
             await StartDownload(urls[i], quality);
@@ -121,15 +114,11 @@ public partial class MainWindow : Window
         BtnDownload.Visibility = Visibility.Visible;
         BtnStop.Visibility = Visibility.Collapsed;
         BtnOpenFolder.Visibility = Visibility.Visible;
-        BatchStatus.Text = _stopRequested ? "Batch Stopped" : "Batch Complete";
+        BatchStatus.Text = _stopRequested ? "Stopped" : "Finished";
     }
 
     private async Task StartDownload(string url, string quality)
     {
-        string outputTemplate = url.Contains("list=") 
-            ? "Downloads/%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s" 
-            : "Downloads/%(title)s.%(ext)s";
-
         try
         {
             var psi = new ProcessStartInfo {
@@ -147,7 +136,8 @@ public partial class MainWindow : Window
                 psi.ArgumentList.Add("-f"); psi.ArgumentList.Add($"bestvideo[height<={quality}]+bestaudio/best[height<={quality}]");
             }
 
-            psi.ArgumentList.Add("--newline"); psi.ArgumentList.Add("-o"); psi.ArgumentList.Add(outputTemplate);
+            psi.ArgumentList.Add("--newline"); psi.ArgumentList.Add("-o"); 
+            psi.ArgumentList.Add("Downloads/%(title)s.%(ext)s");
             psi.ArgumentList.Add(url);
 
             _currentProcess = new Process { StartInfo = psi, EnableRaisingEvents = true };
@@ -168,7 +158,7 @@ public partial class MainWindow : Window
         _stopRequested = true;
         if (_currentProcess != null && !_currentProcess.HasExited)
         {
-            try { _currentProcess.Kill(true); Log("🛑 Stop requested."); }
+            try { _currentProcess.Kill(true); Log("🛑 Stopped."); }
             catch { }
         }
     }
