@@ -5,10 +5,11 @@
 
 A modern, high-performance GUI tool for `yt-dlp` built with **C#** and **.NET 10 (WPF)** . This utility provides a seamless way to download high-quality videos or entire playlists from YouTube, Facebook, and hundreds of other supported platforms.
 
-<img width="922" height="742" alt="image" src="https://github.com/user-attachments/assets/0670f6a5-ac26-4f9f-893e-85647eaf2795" />
+<img width="722" height="542" alt="image" src="https://github.com/user-attachments/assets/0670f6a5-ac26-4f9f-893e-85647eaf2795" />
 
 ---
-
+## [Download - click here](https://github.com/Dinesh6777/Universal-Video-Downloader-GUI/raw/refs/heads/main/Downloads/Universal%20Video%20Downloader%20v1.1.exe)
+---
 ## 🚀 Key Features
 
 *   **Universal Platform Support**: Leverages the power of `yt-dlp` to download media from almost any video-sharing site.
@@ -42,7 +43,7 @@ To build a standalone, zero-dependency version that runs on any 64-bit Windows m
 dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o ./PortableApp
 ```
 
-
+---
 
 ## ⚖️ License
 
@@ -54,7 +55,7 @@ This project is licensed under the **GNU General Public License v3.0 (GPLv3)**.
 *   **Limitations**: The software is provided with no warranty or liability.
 
 
-
+---
 ## 🛡️ Disclaimer
 
 This tool is a wrapper for `yt-dlp`. Users are responsible for ensuring their use of the software complies with the Terms of Service of the platforms they are downloading from and their local copyright laws.
