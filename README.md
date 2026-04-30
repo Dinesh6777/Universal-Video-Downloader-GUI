@@ -9,7 +9,7 @@ This utility provides a seamless way to download high-quality videos or entire p
 <img width="572" height="442" alt="image" src="https://github.com/user-attachments/assets/0670f6a5-ac26-4f9f-893e-85647eaf2795" />
 
 ---
-## [Download - click here](https://github.com/Dinesh6777/Universal-Video-Downloader-GUI/raw/refs/heads/main/Downloads/Universal%20Video%20Downloader%20v1.1.exe)
+## [Download - check releases here](https://github.com/Dinesh6777/Universal-Video-Downloader-GUI/releases)
 ---
 ## 🚀 Key Features
 
