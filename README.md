@@ -16,8 +16,9 @@ This utility provides a seamless way to download high-quality videos or entire p
 *   **Universal Platform Support**: Leverages the power of `yt-dlp` to download media from almost any video-sharing site.
 *   **Intelligent Playlist Handling**: Automatically creates a dedicated subfolder for playlists and prefixes files with their index for perfect organization.
 *   **Manual Control**: Features a dedicated "Stop Download" button that safely terminates the process tree, including active FFmpeg merges.
-*   **Automatic Maintenance**: The app automatically fetches the latest `yt-dlp.exe` on startup and performs weekly update checks to keep site extractors current.
-*   **Quality Presets**: Quickly toggle between 360p, 480p, 720p, and 1080p output.
+*   **Batch Downloading**: Supports a multi-line input field where you can paste a list of URLs or even full playlist links.
+*   **Intelligent Dependency Management**: The app automatically fetches the latest `yt-dlp.exe` on startup and performs weekly update checks to keep site extractors current.
+*   **Quality Presets**: Quickly toggle between 360p, 480p, 720p, 1080p, 2K, 4K, 8K output.
 *   **Verbose Logging**: Real-time terminal output is displayed within the GUI to help troubleshoot failed downloads or geo-restricted content.
 *   **FFmpeg Detection**: Built-in system check to ensure FFmpeg is available for high-quality audio/video merging.
 
