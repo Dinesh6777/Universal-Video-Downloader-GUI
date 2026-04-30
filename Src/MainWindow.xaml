@@ -1,8 +1,11 @@
 <Window x:Class="YtDlpDownloader.MainWindow"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
         Title="Universal Video Downloader" 
-        Height="680" Width="850" 
+        Height="700" Width="850" 
         Background="#F4F4F9" 
         WindowStartupLocation="CenterScreen"
         Icon="appicon.ico"
@@ -29,7 +32,6 @@
         <StackPanel Grid.Row="1" Margin="0,0,0,20">
             <TextBlock Text="Enter Video URLs(one per line) or Playlist URL:" 
                        FontWeight="SemiBold" Margin="0,0,0,8" Foreground="#444"/>
-            
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -37,27 +39,32 @@
                 </Grid.ColumnDefinitions>
 
                 <Grid Grid.Column="0">
-                    <!-- Placeholder Text in Light Grey (#AAA) -->
-                    <TextBlock x:Name="Placeholder" Margin="10" Foreground="#AAA" IsHitTestVisible="False" VerticalAlignment="Top" FontSize="13">
-                        https://www.youtube.com/watch?v=BLelz0cH7M8&#x0a;https://www.youtube.com/watch?v=jcHvPmTTirU&#x0a;https://www.youtube.com/watch?v=eGGUmoxvdAM
+                    <!-- TextBox on bottom layer -->
+                    <TextBox x:Name="UrlInput" Height="90" AcceptsReturn="True" TextWrapping="Wrap" 
+                             VerticalScrollBarVisibility="Auto" Padding="10" FontSize="13" 
+                             BorderBrush="#CCC" VerticalContentAlignment="Top"/>
+
+                    <!-- Placeholder Text on top layer -->
+                    <TextBlock x:Name="Placeholder" Margin="11,11,0,0" Foreground="#AAA" 
+                               IsHitTestVisible="False" VerticalAlignment="Top" FontSize="13">
                         <TextBlock.Style>
+                            <!-- FIXED: Property element moved to the TOP of the TextBlock content -->
                             <Style TargetType="TextBlock">
                                 <Setter Property="Visibility" Value="Collapsed"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding Text, ElementName=UrlInput}" Value="">
                                         <Setter Property="Visibility" Value="Visible"/>
                                     </DataTrigger>
+                                    <DataTrigger Binding="{Binding Text, ElementName=UrlInput}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </TextBlock.Style>
+                        https://www.youtube.com/watch?v=BLelz0cH7M8<LineBreak/>https://www.youtube.com/watch?v=jcHvPmTTirU<LineBreak/>https://www.youtube.com/watch?v=eGGUmoxvdAM
                     </TextBlock>
-
-                    <!-- Input Field Height set to 90 (~4 lines) -->
-                    <TextBox x:Name="UrlInput" Height="90" AcceptsReturn="True" TextWrapping="Wrap" 
-                             VerticalScrollBarVisibility="Auto" Padding="10" FontSize="13" BorderBrush="#CCC"/>
                 </Grid>
 
-                <!-- Clear Button matching input height -->
                 <Button Grid.Column="1" Content="Clear" Click="BtnClear_Click" 
                         Width="80" Margin="10,0,0,0" Height="90" 
                         Background="#E0E0E0" VerticalAlignment="Stretch"/>
@@ -108,7 +115,6 @@
             </Grid>
         </GroupBox>
 
-        <!-- Footer -->
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
             <Button x:Name="BtnOpenFolder" Content="📂 Open Downloads Folder" Click="BtnOpenFolder_Click" Padding="20,8" Background="#6C757D" Foreground="White" Visibility="Collapsed"/>
         </StackPanel>

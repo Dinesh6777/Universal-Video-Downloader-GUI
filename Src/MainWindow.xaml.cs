@@ -40,11 +40,11 @@ public partial class MainWindow : Window
             var psi = new ProcessStartInfo { FileName = "ffmpeg", Arguments = "-version", CreateNoWindow = true, UseShellExecute = false };
             using var proc = Process.Start(psi);
             if (proc != null) await proc.WaitForExitAsync();
-            Log("✅ FFmpeg detected.");
+            Log("✅ FFmpeg detected. High-quality merging and MP3 conversion enabled.");
         }
         catch
         {
-            Log("⚠️ FFmpeg NOT detected! MP3 and high-res merging may fail.");
+            Log("⚠️ FFmpeg NOT detected! Video merging and MP3 conversion may fail.");
         }
     }
 
@@ -81,7 +81,7 @@ public partial class MainWindow : Window
                 if (proc != null) await proc.WaitForExitAsync();
                 await File.WriteAllTextAsync(_updateCheckPath, DateTime.Now.ToString());
             }
-            catch { Log("Update skipped."); }
+            catch { Log("Update check failed/skipped."); }
         }
     }
 
@@ -92,29 +92,30 @@ public partial class MainWindow : Window
         var urls = UrlInput.Text.Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries)
                                 .Select(u => u.Trim()).Where(u => !string.IsNullOrEmpty(u)).ToList();
 
-        if (!urls.Any()) return;
+        if (!urls.Any())
+        {
+            MessageBox.Show("Please enter at least one URL.");
+            return;
+        }
 
         string quality = (QualityCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "best";
         
-        _isDownloading = true;
+        ToggleUI(true);
         _stopRequested = false;
-        BtnDownload.Visibility = Visibility.Collapsed;
-        BtnStop.Visibility = Visibility.Visible;
         LstLog.Items.Clear();
 
         for (int i = 0; i < urls.Count; i++)
         {
             if (_stopRequested) break;
+            
             BatchStatus.Text = $"Downloading {i + 1}/{urls.Count} (Remaining: {urls.Count - (i + 1)})";
             PrgBar.Value = 0;
             await StartDownload(urls[i], quality);
         }
 
-        _isDownloading = false;
-        BtnDownload.Visibility = Visibility.Visible;
-        BtnStop.Visibility = Visibility.Collapsed;
+        ToggleUI(false);
         BtnOpenFolder.Visibility = Visibility.Visible;
-        BatchStatus.Text = _stopRequested ? "Stopped" : "Finished";
+        BatchStatus.Text = _stopRequested ? "Batch Stopped" : "All Downloads Finished";
     }
 
     private async Task StartDownload(string url, string quality)
@@ -158,9 +159,18 @@ public partial class MainWindow : Window
         _stopRequested = true;
         if (_currentProcess != null && !_currentProcess.HasExited)
         {
-            try { _currentProcess.Kill(true); Log("🛑 Stopped."); }
+            try { _currentProcess.Kill(true); Log("🛑 User stopped the download."); }
             catch { }
         }
+    }
+
+    private void ToggleUI(bool downloading)
+    {
+        _isDownloading = downloading;
+        BtnDownload.Visibility = downloading ? Visibility.Collapsed : Visibility.Visible;
+        BtnStop.Visibility = downloading ? Visibility.Visible : Visibility.Collapsed;
+        UrlInput.IsEnabled = !downloading;
+        QualityCombo.IsEnabled = !downloading;
     }
 
     private void ParseProgress(string line)
