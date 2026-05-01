@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.IO.Compression; // Required for extraction
 
 namespace YtDlpDownloader;
 
@@ -24,7 +25,10 @@ public partial class MainWindow : Window
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
         Log("Application Initialized.");
+        
+        // Start dependencies check
         await CheckFFmpeg();
+        
         try
         {
             await CheckAndDownloadYtDlp();
@@ -35,16 +39,113 @@ public partial class MainWindow : Window
 
     private async Task CheckFFmpeg()
     {
+        // 1. Check if ffmpeg.exe exists locally in the app folder
+        string localFfmpeg = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg.exe");
+        if (File.Exists(localFfmpeg))
+        {
+            Log("✅ FFmpeg detected in application folder.");
+            return;
+        }
+
+        // 2. Check if ffmpeg is available in the system PATH
         try
         {
             var psi = new ProcessStartInfo { FileName = "ffmpeg", Arguments = "-version", CreateNoWindow = true, UseShellExecute = false };
             using var proc = Process.Start(psi);
             if (proc != null) await proc.WaitForExitAsync();
-            Log("✅ FFmpeg detected. High-quality merging and MP3 conversion enabled.");
+            Log("✅ FFmpeg detected in system PATH.");
         }
         catch
         {
-            Log("⚠️ FFmpeg NOT detected! Video merging and MP3 conversion may fail.");
+            // 3. Not found: Prompt user to download
+            var result = MessageBox.Show(
+                "FFmpeg is missing! Without it, high-quality video merging (4K/8K) and MP3 conversion will not work.\n\n" +
+                "Would you like to download and install FFmpeg automatically?",
+                "FFmpeg Required", 
+                MessageBoxButton.YesNo, 
+                MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                await DownloadAndInstallFFmpeg();
+            }
+            else
+            {
+                Log("⚠️ FFmpeg skipped. Downloads will be limited to 720p/1080p and MP3 conversion will fail.");
+            }
+        }
+    }
+
+    private async Task DownloadAndInstallFFmpeg()
+    {
+        // Using a reliable direct link to a GPL shared build
+        string ffmpegUrl = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip";
+        string tempZip = Path.Combine(Path.GetTempPath(), "ffmpeg_temp.zip");
+
+        try
+        {
+            Log("🚀 Starting FFmpeg download...");
+            TxtStatus.Text = "Downloading FFmpeg...";
+            PrgBar.Value = 0;
+
+            using (var client = new HttpClient())
+            {
+                using (var response = await client.GetAsync(ffmpegUrl, HttpCompletionOption.ResponseHeadersRead))
+                {
+                    response.EnsureSuccessStatusCode();
+                    var totalBytes = response.Content.Headers.ContentLength ?? -1L;
+
+                    using (var fileStream = new FileStream(tempZip, FileMode.Create, FileAccess.Write, FileShare.None))
+                    using (var downloadStream = await response.Content.ReadAsStreamAsync())
+                    {
+                        var buffer = new byte[81920];
+                        var totalRead = 0L;
+                        int bytesRead;
+
+                        while ((bytesRead = await downloadStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                        {
+                            await fileStream.WriteAsync(buffer, 0, bytesRead);
+                            totalRead += bytesRead;
+
+                            if (totalBytes != -1)
+                            {
+                                var progress = (double)totalRead / totalBytes * 100;
+                                Dispatcher.Invoke(() => PrgBar.Value = progress);
+                            }
+                        }
+                    }
+                }
+            }
+
+            Log("📦 Extracting ffmpeg.exe...");
+            TxtStatus.Text = "Extracting...";
+
+            await Task.Run(() =>
+            {
+                using (ZipArchive archive = ZipFile.OpenRead(tempZip))
+                {
+                    // Find ffmpeg.exe inside the zip (it's usually inside a /bin/ folder)
+                    var entry = archive.Entries.FirstOrDefault(e => e.FullName.EndsWith("ffmpeg.exe", StringComparison.OrdinalIgnoreCase));
+                    if (entry != null)
+                    {
+                        string destPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg.exe");
+                        entry.ExtractToFile(destPath, true);
+                    }
+                }
+            });
+
+            Log("✅ FFmpeg installed successfully.");
+            TxtStatus.Text = "Ready";
+        }
+        catch (Exception ex)
+        {
+            Log($"❌ FFmpeg Error: {ex.Message}");
+            MessageBox.Show("Failed to download FFmpeg. You may need to install it manually.");
+        }
+        finally
+        {
+            if (File.Exists(tempZip)) File.Delete(tempZip);
+            PrgBar.Value = 0;
         }
     }
 
