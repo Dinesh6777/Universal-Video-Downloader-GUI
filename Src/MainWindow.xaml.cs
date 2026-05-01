@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.IO.Compression; // Required for extraction
 
 namespace YtDlpDownloader;
 
@@ -25,274 +25,154 @@ public partial class MainWindow : Window
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
         Log("Application Initialized.");
-        
-        // Start dependencies check
         await CheckFFmpeg();
-        
-        try
-        {
+        try {
             await CheckAndDownloadYtDlp();
             await AutoUpdateYtDlp();
-        }
-        catch (Exception ex) { Log($"Startup Alert: {ex.Message}"); }
+        } catch (Exception ex) { Log($"Startup Alert: {ex.Message}"); }
     }
 
     private async Task CheckFFmpeg()
     {
-        // 1. Check if ffmpeg.exe exists locally in the app folder
         string localFfmpeg = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg.exe");
-        if (File.Exists(localFfmpeg))
-        {
-            Log("✅ FFmpeg detected in application folder.");
-            return;
-        }
+        if (File.Exists(localFfmpeg)) { Log("✅ FFmpeg detected in app folder."); return; }
 
-        // 2. Check if ffmpeg is available in the system PATH
-        try
-        {
+        try {
             var psi = new ProcessStartInfo { FileName = "ffmpeg", Arguments = "-version", CreateNoWindow = true, UseShellExecute = false };
             using var proc = Process.Start(psi);
             if (proc != null) await proc.WaitForExitAsync();
             Log("✅ FFmpeg detected in system PATH.");
-        }
-        catch
-        {
-            // 3. Not found: Prompt user to download
-            var result = MessageBox.Show(
-                "FFmpeg is missing! Without it, high-quality video merging (4K/8K) and MP3 conversion will not work.\n\n" +
-                "Would you like to download and install FFmpeg automatically?",
-                "FFmpeg Required", 
-                MessageBoxButton.YesNo, 
-                MessageBoxImage.Warning);
-
-            if (result == MessageBoxResult.Yes)
-            {
-                await DownloadAndInstallFFmpeg();
-            }
-            else
-            {
-                Log("⚠️ FFmpeg skipped. Downloads will be limited to 720p/1080p and MP3 conversion will fail.");
-            }
+        } catch {
+            var res = MessageBox.Show("FFmpeg is missing! High-quality merging and MP3s require it.\nDownload automatically?", "FFmpeg Required", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (res == MessageBoxResult.Yes) await DownloadAndInstallFFmpeg();
+            else Log("⚠️ FFmpeg skipped. Resolution limited.");
         }
     }
 
     private async Task DownloadAndInstallFFmpeg()
     {
-        // Using a reliable direct link to a GPL shared build
-        string ffmpegUrl = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip";
-        string tempZip = Path.Combine(Path.GetTempPath(), "ffmpeg_temp.zip");
-
-        try
-        {
-            Log("🚀 Starting FFmpeg download...");
-            TxtStatus.Text = "Downloading FFmpeg...";
-            PrgBar.Value = 0;
-
+        string url = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip";
+        string zip = Path.Combine(Path.GetTempPath(), "ffmpeg_temp.zip");
+        
+        try {
+            Log("🚀 Downloading FFmpeg...");
             using (var client = new HttpClient())
             {
-                using (var response = await client.GetAsync(ffmpegUrl, HttpCompletionOption.ResponseHeadersRead))
+                using (var resp = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead))
                 {
-                    response.EnsureSuccessStatusCode();
-                    var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-
-                    using (var fileStream = new FileStream(tempZip, FileMode.Create, FileAccess.Write, FileShare.None))
-                    using (var downloadStream = await response.Content.ReadAsStreamAsync())
+                    resp.EnsureSuccessStatusCode();
+                    var total = resp.Content.Headers.ContentLength ?? -1L;
+                    
+                    // FIXED: Explicitly scoped using block to close the file handle before extraction
+                    using (var fs = new FileStream(zip, FileMode.Create, FileAccess.Write, FileShare.None))
+                    using (var ds = await resp.Content.ReadAsStreamAsync())
                     {
-                        var buffer = new byte[81920];
-                        var totalRead = 0L;
-                        int bytesRead;
-
-                        while ((bytesRead = await downloadStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
-                        {
-                            await fileStream.WriteAsync(buffer, 0, bytesRead);
-                            totalRead += bytesRead;
-
-                            if (totalBytes != -1)
-                            {
-                                var progress = (double)totalRead / totalBytes * 100;
-                                Dispatcher.Invoke(() => PrgBar.Value = progress);
-                            }
+                        var buffer = new byte[81920]; 
+                        var read = 0L; 
+                        int b;
+                        while ((b = await ds.ReadAsync(buffer, 0, buffer.Length)) > 0) {
+                            await fs.WriteAsync(buffer, 0, b); 
+                            read += b;
+                            if (total != -1) Dispatcher.Invoke(() => PrgBar.Value = (double)read / total * 100);
                         }
-                    }
+                    } 
                 }
-            }
+            } // File handle is now released!
 
             Log("📦 Extracting ffmpeg.exe...");
-            TxtStatus.Text = "Extracting...";
-
-            await Task.Run(() =>
-            {
-                using (ZipArchive archive = ZipFile.OpenRead(tempZip))
+            await Task.Run(() => {
+                using (var arch = ZipFile.OpenRead(zip))
                 {
-                    // Find ffmpeg.exe inside the zip (it's usually inside a /bin/ folder)
-                    var entry = archive.Entries.FirstOrDefault(e => e.FullName.EndsWith("ffmpeg.exe", StringComparison.OrdinalIgnoreCase));
-                    if (entry != null)
-                    {
-                        string destPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg.exe");
-                        entry.ExtractToFile(destPath, true);
-                    }
+                    var entry = arch.Entries.FirstOrDefault(e => e.FullName.EndsWith("ffmpeg.exe", StringComparison.OrdinalIgnoreCase));
+                    if (entry != null) entry.ExtractToFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg.exe"), true);
                 }
             });
-
-            Log("✅ FFmpeg installed successfully.");
-            TxtStatus.Text = "Ready";
-        }
-        catch (Exception ex)
-        {
-            Log($"❌ FFmpeg Error: {ex.Message}");
-            MessageBox.Show("Failed to download FFmpeg. You may need to install it manually.");
-        }
-        finally
-        {
-            if (File.Exists(tempZip)) File.Delete(tempZip);
-            PrgBar.Value = 0;
-        }
+            Log("✅ FFmpeg Installed.");
+        } catch (Exception ex) { Log($"❌ Error: {ex.Message}"); }
+        finally { if (File.Exists(zip)) try { File.Delete(zip); } catch { } PrgBar.Value = 0; }
     }
 
     private async Task CheckAndDownloadYtDlp()
     {
-        if (!File.Exists(_ytDlpPath))
-        {
+        if (!File.Exists(_ytDlpPath)) {
             Log("yt-dlp.exe missing. Downloading...");
-            TxtStatus.Text = "Downloading tool...";
             using var client = new HttpClient();
-            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0");
             var data = await client.GetByteArrayAsync("https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe");
             await File.WriteAllBytesAsync(_ytDlpPath, data);
             Log("yt-dlp downloaded.");
-            TxtStatus.Text = "Ready";
         }
     }
 
     private async Task AutoUpdateYtDlp()
     {
         if (!File.Exists(_ytDlpPath)) return;
-        bool shouldUpdate = !File.Exists(_updateCheckPath);
-        if (!shouldUpdate && DateTime.TryParse(await File.ReadAllTextAsync(_updateCheckPath), out DateTime last))
-        {
-            if ((DateTime.Now - last).TotalDays >= 7) shouldUpdate = true;
-        }
-
-        if (shouldUpdate)
-        {
-            Log("Checking for updates...");
-            try
-            {
-                var proc = Process.Start(new ProcessStartInfo { FileName = _ytDlpPath, Arguments = "--update", CreateNoWindow = true, UseShellExecute = false });
-                if (proc != null) await proc.WaitForExitAsync();
+        if (!File.Exists(_updateCheckPath) || (DateTime.Now - File.GetLastWriteTime(_updateCheckPath)).TotalDays >= 7) {
+            try {
+                var p = Process.Start(new ProcessStartInfo { FileName = _ytDlpPath, Arguments = "--update", CreateNoWindow = true });
+                if (p != null) await p.WaitForExitAsync();
                 await File.WriteAllTextAsync(_updateCheckPath, DateTime.Now.ToString());
-            }
-            catch { Log("Update check failed/skipped."); }
+            } catch { }
         }
     }
 
     private async void BtnDownload_Click(object sender, RoutedEventArgs e)
     {
         if (_isDownloading) return;
-        
-        var urls = UrlInput.Text.Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries)
-                                .Select(u => u.Trim()).Where(u => !string.IsNullOrEmpty(u)).ToList();
+        var urls = UrlInput.Text.Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries).Select(u => u.Trim()).ToList();
+        if (!urls.Any()) return;
 
-        if (!urls.Any())
-        {
-            MessageBox.Show("Please enter at least one URL.");
-            return;
-        }
-
-        string quality = (QualityCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "best";
-        
-        ToggleUI(true);
-        _stopRequested = false;
-        LstLog.Items.Clear();
-
-        for (int i = 0; i < urls.Count; i++)
-        {
+        ToggleUI(true); _stopRequested = false; LstLog.Items.Clear();
+        for (int i = 0; i < urls.Count; i++) {
             if (_stopRequested) break;
-            
-            BatchStatus.Text = $"Downloading {i + 1}/{urls.Count} (Remaining: {urls.Count - (i + 1)})";
-            PrgBar.Value = 0;
-            await StartDownload(urls[i], quality);
+            BatchStatus.Text = $"Downloading {i + 1}/{urls.Count}";
+            await StartDownload(urls[i], (QualityCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "best");
         }
-
-        ToggleUI(false);
+        ToggleUI(false); BatchStatus.Text = "Finished";
         BtnOpenFolder.Visibility = Visibility.Visible;
-        BatchStatus.Text = _stopRequested ? "Batch Stopped" : "All Downloads Finished";
     }
 
     private async Task StartDownload(string url, string quality)
     {
-        try
-        {
-            var psi = new ProcessStartInfo {
-                FileName = _ytDlpPath, RedirectStandardOutput = true,
-                RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true
-            };
-
-            if (quality == "mp3") {
-                psi.ArgumentList.Add("-x"); 
-                psi.ArgumentList.Add("--audio-format"); psi.ArgumentList.Add("mp3");
-                psi.ArgumentList.Add("--audio-quality"); psi.ArgumentList.Add("0");
-            } else if (quality == "best") {
-                psi.ArgumentList.Add("-f"); psi.ArgumentList.Add("bestvideo+bestaudio/best");
-            } else {
-                psi.ArgumentList.Add("-f"); psi.ArgumentList.Add($"bestvideo[height<={quality}]+bestaudio/best[height<={quality}]");
+        try {
+            var psi = new ProcessStartInfo { FileName = _ytDlpPath, RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true };
+            if (quality == "mp3") { psi.ArgumentList.Add("-x"); psi.ArgumentList.Add("--audio-format"); psi.ArgumentList.Add("mp3"); }
+            else { psi.ArgumentList.Add("-f"); psi.ArgumentList.Add(quality == "best" ? "bestvideo+bestaudio/best" : $"bestvideo[height<={quality}]+bestaudio/best"); }
+            
+            string extra = AdvancedArgsInput.Text.Trim();
+            if (!string.IsNullOrEmpty(extra)) {
+                var matches = Regex.Matches(extra, @"[\""].+?[\""]|[^ ]+");
+                foreach (Match m in matches) psi.ArgumentList.Add(m.Value.Replace("\"", ""));
             }
 
-            psi.ArgumentList.Add("--newline"); psi.ArgumentList.Add("-o"); 
-            psi.ArgumentList.Add("Downloads/%(title)s.%(ext)s");
-            psi.ArgumentList.Add(url);
-
+            psi.ArgumentList.Add("--newline"); psi.ArgumentList.Add("-o"); psi.ArgumentList.Add("Downloads/%(title)s.%(ext)s"); psi.ArgumentList.Add(url);
             _currentProcess = new Process { StartInfo = psi, EnableRaisingEvents = true };
             _currentProcess.OutputDataReceived += (s, e) => { if (e.Data != null) Dispatcher.Invoke(() => { Log(e.Data); ParseProgress(e.Data); }); };
             _currentProcess.ErrorDataReceived += (s, e) => { if (e.Data != null) Dispatcher.Invoke(() => Log($"[ERROR] {e.Data}")); };
-
-            _currentProcess.Start();
-            _currentProcess.BeginOutputReadLine();
-            _currentProcess.BeginErrorReadLine();
+            _currentProcess.Start(); _currentProcess.BeginOutputReadLine(); _currentProcess.BeginErrorReadLine();
             await _currentProcess.WaitForExitAsync();
-        }
-        catch (Exception ex) { Log($"[CRITICAL] {ex.Message}"); }
-        finally { _currentProcess = null; }
+        } catch (Exception ex) { Log($"Error: {ex.Message}"); } finally { _currentProcess = null; }
     }
 
-    private void BtnStop_Click(object sender, RoutedEventArgs e)
-    {
-        _stopRequested = true;
-        if (_currentProcess != null && !_currentProcess.HasExited)
-        {
-            try { _currentProcess.Kill(true); Log("🛑 User stopped the download."); }
-            catch { }
-        }
-    }
+    private void BtnStop_Click(object sender, RoutedEventArgs e) { _stopRequested = true; if (_currentProcess != null) _currentProcess.Kill(true); }
 
-    private void ToggleUI(bool downloading)
-    {
-        _isDownloading = downloading;
-        BtnDownload.Visibility = downloading ? Visibility.Collapsed : Visibility.Visible;
-        BtnStop.Visibility = downloading ? Visibility.Visible : Visibility.Collapsed;
-        UrlInput.IsEnabled = !downloading;
-        QualityCombo.IsEnabled = !downloading;
-    }
+    private void ToggleUI(bool d) { _isDownloading = d; BtnDownload.Visibility = d ? Visibility.Collapsed : Visibility.Visible; BtnStop.Visibility = d ? Visibility.Visible : Visibility.Collapsed; }
 
-    private void ParseProgress(string line)
-    {
-        var match = Regex.Match(line, @"(\d+(\.\d+)?)%");
-        if (match.Success && double.TryParse(match.Groups[1].Value, out double val)) PrgBar.Value = val;
-    }
+    private void Log(string m) { if (!Dispatcher.CheckAccess()) { Dispatcher.Invoke(() => Log(m)); return; } LstLog.Items.Add($"[{DateTime.Now:HH:mm:ss}] {m}"); LstLog.ScrollIntoView(LstLog.Items[LstLog.Items.Count - 1]); }
 
-    private void Log(string message)
-    {
-        if (!Dispatcher.CheckAccess()) { Dispatcher.Invoke(() => Log(message)); return; }
-        LstLog.Items.Add($"[{DateTime.Now:HH:mm:ss}] {message}");
-        if (LstLog.Items.Count > 0) LstLog.ScrollIntoView(LstLog.Items[LstLog.Items.Count - 1]);
-    }
+    private void ParseProgress(string l) { var m = Regex.Match(l, @"(\d+(\.\d+)?)%"); if (m.Success && double.TryParse(m.Groups[1].Value, out double v)) PrgBar.Value = v; }
 
     private void BtnClear_Click(object sender, RoutedEventArgs e) => UrlInput.Clear();
 
-    private void BtnOpenFolder_Click(object sender, RoutedEventArgs e)
-    {
-        string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Downloads");
-        if (!Directory.Exists(path)) Directory.CreateDirectory(path);
-        Process.Start("explorer.exe", path);
+    private void BtnOpenFolder_Click(object sender, RoutedEventArgs e) { Process.Start("explorer.exe", Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Downloads")); }
+
+    private void BtnAdvancedToggle_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e) {
+        AdvancedPanel.Visibility = AdvancedPanel.Visibility == Visibility.Collapsed ? Visibility.Visible : Visibility.Collapsed;
+        BtnAdvancedToggle.Text = AdvancedPanel.Visibility == Visibility.Visible ? "▼ Advanced Options" : "▶ Advanced Options";
     }
+
+    private void LstLog_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e) => CopySelectedLog();
+
+    private void MenuItemCopy_Click(object sender, RoutedEventArgs e) => CopySelectedLog();
+
+    private void CopySelectedLog() { if (LstLog.SelectedItem != null) Clipboard.SetText(LstLog.SelectedItem.ToString() ?? ""); }
 }
