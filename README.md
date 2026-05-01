@@ -21,6 +21,8 @@ This utility provides a seamless way to download high-quality videos or entire p
 *   **Quality Presets**: Quickly toggle between 360p, 480p, 720p, 1080p, 2K, 4K, 8K output.
 *   **Verbose Logging**: Real-time terminal output is displayed within the GUI to help troubleshoot failed downloads or geo-restricted content.
 *   **FFmpeg Detection**: Built-in system check to ensure FFmpeg is available for high-quality audio/video merging.
+*   **Toggleable Advanced Options**: Includes a hidden panel to input custom parameters that are intelligently parsed into the downloader command.
+*   **Automated FFmpeg Installer**: Detects missing requirements and handles the download and extraction of ffmpeg.exe directly to the app folder.
 
 ---
 
