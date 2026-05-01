@@ -6,7 +6,7 @@
 A portable, modern and simplistic graphical interface for the command line tool `yt-dlp` built with **C#** and **.NET 10 (WPF)** .
 This utility provides a seamless way to download high-quality videos or entire playlists from YouTube, Facebook, and hundreds of other supported platforms.
 
-<img width="572" height="442" alt="image" src="https://github.com/user-attachments/assets/0670f6a5-ac26-4f9f-893e-85647eaf2795" />
+<img width="600" height="500" alt="image" src="https://github.com/user-attachments/assets/ca293dd1-7f3e-4970-8abe-a701356af1ad" />
 
 ---
 ## [Download - check releases here](https://github.com/Dinesh6777/Universal-Video-Downloader-GUI/releases)
