@@ -52,9 +52,9 @@ dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=
 
 ---
 ## ❤️Donate
-* Paypal: 
-* Bitcoin: 
-* Ethereum: 
+* Paypal: NA
+* Bitcoin: bc1qdy0p2ecg6cqhrn3v7n0hepu7md2fedsegz3m2j
+* Ethereum(ERC20): 0x6CB452DAb1C580Cc1395dF68f80e071E27102146
 ---
 
 ## ⚖️ License
