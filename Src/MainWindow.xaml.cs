@@ -11,6 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Runtime.InteropServices;
 using System.Windows.Navigation;
+using System.Text.Json;
 
 namespace YtDlpDownloader;
 
@@ -31,59 +32,100 @@ public partial class MainWindow : Window
         try {
             await CheckAndDownloadYtDlp();
             await AutoUpdateYtDlp();
+            
+            // Trigger Version Check after small delay to let UI settle
+            await Task.Delay(1000);
+            _ = CheckForAppUpdates(); 
         } catch (Exception ex) { Log($"Startup Alert: {ex.Message}"); }
     }
 
-    private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
+    // --- IMPROVED VERSION CHECK ---
+    private async Task CheckForAppUpdates()
     {
-        try {
-            Process.Start(new ProcessStartInfo { FileName = e.Uri.AbsoluteUri, UseShellExecute = true });
-            e.Handled = true;
-        } catch (Exception ex) { Log($"Link Error: {ex.Message}"); }
+        try
+        {
+            // Use GetCurrentProcess to get the ACTUAL filename on disk
+            string fullPath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
+            string fileName = Path.GetFileName(fullPath);
+            
+            Log($"🔍 Checking local version from: {fileName}");
+
+            // Match .v1.4 or .v1.11 or .v1.22
+            var currentMatch = Regex.Match(fileName, @"\.v(\d+\.\d+)");
+            if (!currentMatch.Success) 
+            {
+                Log("⚠️ Could not detect version in filename. Ensure format is 'Name.v1.4.exe'");
+                return;
+            }
+            
+            Version currentVersion = new Version(currentMatch.Groups[1].Value);
+
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("User-Agent", "UVD-App");
+            var response = await client.GetStringAsync("https://api.github.com/repos/Dinesh6777/Universal-Video-Downloader-GUI/releases/latest");
+            
+            using var doc = JsonDocument.Parse(response);
+            string tagName = doc.RootElement.GetProperty("tag_name").GetString() ?? ""; 
+            
+            // Match UVDv1.22
+            var githubMatch = Regex.Match(tagName, @"UVDv(\d+\.\d+)");
+            if (githubMatch.Success)
+            {
+                Version latestVersion = new Version(githubMatch.Groups[1].Value);
+
+                if (latestVersion > currentVersion)
+                {
+                    Dispatcher.Invoke(() => {
+                        var result = MessageBox.Show(
+                            $"New version of Universal Video Downloader {latestVersion} is available!\n(Current: {currentVersion})\n\nWould you like to download it now?",
+                            "Update Available",
+                            MessageBoxButton.YesNo,
+                            MessageBoxImage.Information);
+
+                        if (result == MessageBoxResult.Yes)
+                        {
+                            Process.Start(new ProcessStartInfo { FileName = "https://github.com/Dinesh6777/Universal-Video-Downloader-GUI/releases", UseShellExecute = true });
+                        }
+                    });
+                }
+                else { Log($"✅ App is up to date (v{currentVersion})."); }
+            }
+        }
+        catch (Exception ex) { Log($"❌ Version check failed: {ex.Message}"); }
     }
 
-    // Triggered when RadioButtons for Firefox or Chrome are selected
+    // --- IMPROVED DENO CHECK ---
     private async void RbCookies_Checked(object sender, RoutedEventArgs e)
     {
-        if (RbFirefox.IsChecked == true || RbChrome.IsChecked == true)
-        {
-            await CheckAndInstallDeno();
-        }
+        // Added a log so you can see if the event even fires
+        Log($"Option selected: {(sender as RadioButton)?.Content}");
+        await CheckAndInstallDeno();
     }
 
     private async Task CheckAndInstallDeno()
     {
-        // 1. Check App Folder
-        if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "deno.exe")))
-        {
-            Log("✅ Deno found locally.");
+        string localDeno = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "deno.exe");
+        
+        if (File.Exists(localDeno)) {
+            Log("✅ Deno found in app folder.");
             return;
         }
 
-        // 2. Check System PATH
-        if (await IsToolInSystemPath("deno"))
-        {
-            Log("✅ Deno detected in system environment.");
+        if (await IsToolInSystemPath("deno")) {
+            Log("✅ Deno found in system PATH.");
             return;
         }
 
-        // 3. Auto-Install based on Architecture
-        Log("🔍 Deno not found. Preparing automated installation...");
+        Log("🔍 Deno missing. Starting auto-install...");
         Architecture arch = RuntimeInformation.OSArchitecture;
-        string url = arch switch
-        {
+        string url = arch switch {
             Architecture.X64 => "https://github.com/denoland/deno/releases/latest/download/deno-x86_64-pc-windows-msvc.zip",
             Architecture.Arm64 => "https://github.com/denoland/deno/releases/latest/download/deno-aarch64-pc-windows-msvc.zip",
             _ => ""
         };
 
-        if (string.IsNullOrEmpty(url))
-        {
-            Log("⚠️ Architecture not supported for Deno auto-install.");
-            return;
-        }
-
-        await DownloadAndInstallTool("Deno", url, "deno.exe");
+        if (!string.IsNullOrEmpty(url)) await DownloadAndInstallTool("Deno", url, "deno.exe");
+        else Log("❌ Error: Unsupported architecture for Deno.");
     }
 
     private async Task<bool> IsToolInSystemPath(string tool)
@@ -96,50 +138,39 @@ public partial class MainWindow : Window
         return false;
     }
 
-    private async Task DownloadAndInstallTool(string tool, string url, string exeName)
+    private async Task DownloadAndInstallTool(string tool, string url, string exe)
     {
         string zip = Path.Combine(Path.GetTempPath(), $"{tool}_temp.zip");
         try {
             Log($"🚀 Downloading {tool}...");
-            using (var client = new HttpClient()) {
-                using (var resp = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead)) {
-                    resp.EnsureSuccessStatusCode();
-                    var total = resp.Content.Headers.ContentLength ?? -1L;
-                    using (var fs = new FileStream(zip, FileMode.Create, FileAccess.Write, FileShare.None))
-                    using (var ds = await resp.Content.ReadAsStreamAsync()) {
-                        var buffer = new byte[81920]; var read = 0L; int b;
-                        while ((b = await ds.ReadAsync(buffer, 0, buffer.Length)) > 0) {
-                            await fs.WriteAsync(buffer, 0, b); read += b;
-                            if (total != -1) Dispatcher.Invoke(() => PrgBar.Value = (double)read / total * 100);
-                        }
-                    }
+            using var client = new HttpClient();
+            using var resp = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+            var total = resp.Content.Headers.ContentLength ?? -1L;
+            
+            using (var fs = new FileStream(zip, FileMode.Create, FileAccess.Write, FileShare.None))
+            using (var ds = await resp.Content.ReadAsStreamAsync()) {
+                var buffer = new byte[81920]; var read = 0L; int b;
+                while ((b = await ds.ReadAsync(buffer, 0, buffer.Length)) > 0) {
+                    await fs.WriteAsync(buffer, 0, b); read += b;
+                    if (total != -1) Dispatcher.Invoke(() => PrgBar.Value = (double)read / total * 100);
                 }
-            } // File handle is closed here
-
-            Log($"📦 Extracting {exeName}...");
+            }
+            
+            Log($"📦 Extracting {exe}...");
             await Task.Run(() => {
-                using (var arch = ZipFile.OpenRead(zip)) {
-                    // Find the exe by Name (ignores nested folders in zip)
-                    var entry = arch.Entries.FirstOrDefault(e => e.Name.Equals(exeName, StringComparison.OrdinalIgnoreCase));
-                    if (entry != null) entry.ExtractToFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, exeName), true);
-                }
+                using var arch = ZipFile.OpenRead(zip);
+                var entry = arch.Entries.FirstOrDefault(e => e.Name.Equals(exe, StringComparison.OrdinalIgnoreCase));
+                if (entry != null) entry.ExtractToFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, exe), true);
             });
-            Log($"✅ {tool} successfully installed.");
-        } catch (Exception ex) { Log($"❌ {tool} Install Error: {ex.Message}"); }
+            Log($"✅ {tool} Installed successfully.");
+        } catch (Exception ex) { Log($"❌ {tool} install failed: {ex.Message}"); }
         finally { if (File.Exists(zip)) try { File.Delete(zip); } catch { } PrgBar.Value = 0; }
     }
 
     private async Task CheckFFmpeg()
     {
         if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg.exe")) || await IsToolInSystemPath("ffmpeg")) return;
-        
-        // VERBOSE DIALOG BOX
-        var res = MessageBox.Show(
-            "FFmpeg is missing! High-quality merging and MP3s require it.\nDownload automatically?", 
-            "FFmpeg Missing", 
-            MessageBoxButton.YesNo, 
-            MessageBoxImage.Warning);
-
+        var res = MessageBox.Show("FFmpeg is missing! High-quality merging and MP3s require it.\nDownload automatically?", "FFmpeg Missing", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (res == MessageBoxResult.Yes) 
             await DownloadAndInstallTool("FFmpeg", "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip", "ffmpeg.exe");
     }
@@ -170,7 +201,8 @@ public partial class MainWindow : Window
         } catch (Exception ex) { Log($"Error: {ex.Message}"); } finally { _currentProcess = null; }
     }
 
-    // --- standard logic remains ---
+    // --- UI/Helper Logic ---
+    private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e) { try { Process.Start(new ProcessStartInfo { FileName = e.Uri.AbsoluteUri, UseShellExecute = true }); e.Handled = true; } catch { } }
     private async Task CheckAndDownloadYtDlp() { if (!File.Exists(_ytDlpPath)) { Log("yt-dlp missing. Downloading..."); using var c = new HttpClient(); var d = await c.GetByteArrayAsync("https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"); await File.WriteAllBytesAsync(_ytDlpPath, d); } }
     private async Task AutoUpdateYtDlp() { if (File.Exists(_ytDlpPath)) { try { var p = Process.Start(new ProcessStartInfo { FileName = _ytDlpPath, Arguments = "--update", CreateNoWindow = true }); if (p != null) await p.WaitForExitAsync(); } catch { } } }
     private async void BtnDownload_Click(object sender, RoutedEventArgs e) { if (_isDownloading) return; var urls = UrlInput.Text.Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries).Select(u => u.Trim()).ToList(); if (!urls.Any()) return; ToggleUI(true); _stopRequested = false; LstLog.Items.Clear(); for (int i = 0; i < urls.Count; i++) { if (_stopRequested) break; BatchStatus.Text = $"Downloading {i + 1}/{urls.Count}"; await StartDownload(urls[i], (QualityCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "best"); } ToggleUI(false); BatchStatus.Text = "Finished"; BtnOpenFolder.Visibility = Visibility.Visible; }
