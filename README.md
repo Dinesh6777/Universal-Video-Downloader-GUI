@@ -34,7 +34,7 @@ This utility provides a seamless way to download high-quality videos or entire p
 4.  **Manage Files**: Once finished, click **Open Downloads Folder** to access your media.
 
 ---
-## 🛠️ Build and Installation
+## 🛠️ Developer Build and Setup
 
 ### Prerequisites
 *   [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
@@ -47,6 +47,11 @@ To build a standalone, zero-dependency version that runs on any 64-bit Windows m
 dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o ./PortableApp
 ```
 
+---
+## ❤️Donate and support
+Paypal: 
+Bitcoin: 
+Ethereum: 
 ---
 
 ## ⚖️ License
