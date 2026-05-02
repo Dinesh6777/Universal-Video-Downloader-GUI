@@ -33,30 +33,21 @@ public partial class MainWindow : Window
             await CheckAndDownloadYtDlp();
             await AutoUpdateYtDlp();
             
-            // Trigger Version Check after small delay to let UI settle
             await Task.Delay(1000);
             _ = CheckForAppUpdates(); 
         } catch (Exception ex) { Log($"Startup Alert: {ex.Message}"); }
     }
 
-    // --- IMPROVED VERSION CHECK ---
     private async Task CheckForAppUpdates()
     {
         try
         {
-            // Use GetCurrentProcess to get the ACTUAL filename on disk
             string fullPath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
             string fileName = Path.GetFileName(fullPath);
-            
             Log($"🔍 Checking local version from: {fileName}");
 
-            // Match .v1.4 or .v1.11 or .v1.22
             var currentMatch = Regex.Match(fileName, @"\.v(\d+\.\d+)");
-            if (!currentMatch.Success) 
-            {
-                Log("⚠️ Could not detect version in filename. Ensure format is 'Name.v1.4.exe'");
-                return;
-            }
+            if (!currentMatch.Success) return;
             
             Version currentVersion = new Version(currentMatch.Groups[1].Value);
 
@@ -67,12 +58,10 @@ public partial class MainWindow : Window
             using var doc = JsonDocument.Parse(response);
             string tagName = doc.RootElement.GetProperty("tag_name").GetString() ?? ""; 
             
-            // Match UVDv1.22
             var githubMatch = Regex.Match(tagName, @"UVDv(\d+\.\d+)");
             if (githubMatch.Success)
             {
                 Version latestVersion = new Version(githubMatch.Groups[1].Value);
-
                 if (latestVersion > currentVersion)
                 {
                     Dispatcher.Invoke(() => {
@@ -94,10 +83,8 @@ public partial class MainWindow : Window
         catch (Exception ex) { Log($"❌ Version check failed: {ex.Message}"); }
     }
 
-    // --- IMPROVED DENO CHECK ---
     private async void RbCookies_Checked(object sender, RoutedEventArgs e)
     {
-        // Added a log so you can see if the event even fires
         Log($"Option selected: {(sender as RadioButton)?.Content}");
         await CheckAndInstallDeno();
     }
@@ -105,16 +92,8 @@ public partial class MainWindow : Window
     private async Task CheckAndInstallDeno()
     {
         string localDeno = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "deno.exe");
-        
-        if (File.Exists(localDeno)) {
-            Log("✅ Deno found in app folder.");
-            return;
-        }
-
-        if (await IsToolInSystemPath("deno")) {
-            Log("✅ Deno found in system PATH.");
-            return;
-        }
+        if (File.Exists(localDeno)) { Log("✅ Deno found in app folder."); return; }
+        if (await IsToolInSystemPath("deno")) { Log("✅ Deno found in system PATH."); return; }
 
         Log("🔍 Deno missing. Starting auto-install...");
         Architecture arch = RuntimeInformation.OSArchitecture;
@@ -123,9 +102,7 @@ public partial class MainWindow : Window
             Architecture.Arm64 => "https://github.com/denoland/deno/releases/latest/download/deno-aarch64-pc-windows-msvc.zip",
             _ => ""
         };
-
         if (!string.IsNullOrEmpty(url)) await DownloadAndInstallTool("Deno", url, "deno.exe");
-        else Log("❌ Error: Unsupported architecture for Deno.");
     }
 
     private async Task<bool> IsToolInSystemPath(string tool)
@@ -169,20 +146,46 @@ public partial class MainWindow : Window
 
     private async Task CheckFFmpeg()
     {
-        if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg.exe")) || await IsToolInSystemPath("ffmpeg")) return;
+        // ADDED: Detailed logging for path checks[cite: 5]
+        if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg.exe"))) {
+            Log("✅ FFmpeg found in app folder.");
+            return;
+        }
+        
+        if (await IsToolInSystemPath("ffmpeg")) {
+            Log("✅ FFmpeg detected in system PATH.");
+            return;
+        }
+
         var res = MessageBox.Show("FFmpeg is missing! High-quality merging and MP3s require it.\nDownload automatically?", "FFmpeg Missing", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (res == MessageBoxResult.Yes) 
             await DownloadAndInstallTool("FFmpeg", "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip", "ffmpeg.exe");
     }
 
-    private async Task StartDownload(string url, string quality)
+    private async Task StartDownload(string url, string quality, string format)
     {
         string template = url.Contains("list=") ? "Downloads/%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s" : "Downloads/%(title)s.%(ext)s";
         try {
             var psi = new ProcessStartInfo { FileName = _ytDlpPath, RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true };
-            if (quality == "mp3") { psi.ArgumentList.Add("-x"); psi.ArgumentList.Add("--audio-format"); psi.ArgumentList.Add("mp3"); }
-            else { psi.ArgumentList.Add("-f"); psi.ArgumentList.Add(quality == "best" ? "bestvideo+bestaudio/best" : $"bestvideo[height<={quality}]+bestaudio/best"); }
             
+            if (format == "mp3") 
+            {
+                psi.ArgumentList.Add("-x"); 
+                psi.ArgumentList.Add("--audio-format"); psi.ArgumentList.Add("mp3");
+                psi.ArgumentList.Add("--audio-quality"); psi.ArgumentList.Add("0");
+            }
+            else 
+            {
+                psi.ArgumentList.Add("-f");
+                psi.ArgumentList.Add(quality == "best" ? "bestvideo+bestaudio/best" : $"bestvideo[height<={quality}]+bestaudio/best");
+
+                if (format != "default")
+                {
+                    psi.ArgumentList.Add("--merge-output-format");
+                    psi.ArgumentList.Add(format);
+                }
+            }
+
             string extra = AdvancedArgsInput.Text.Trim();
             if (!string.IsNullOrEmpty(extra)) {
                 var matches = Regex.Matches(extra, @"[\""].+?[\""]|[^ ]+");
@@ -201,11 +204,57 @@ public partial class MainWindow : Window
         } catch (Exception ex) { Log($"Error: {ex.Message}"); } finally { _currentProcess = null; }
     }
 
-    // --- UI/Helper Logic ---
+    private async void BtnDownload_Click(object sender, RoutedEventArgs e) 
+    { 
+        if (_isDownloading) return; 
+        var urls = UrlInput.Text.Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries).Select(u => u.Trim()).ToList(); 
+        if (!urls.Any()) return; 
+
+        string quality = (QualityCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "best";
+        string format = (FormatCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "default";
+
+        ToggleUI(true); 
+        _stopRequested = false; 
+        LstLog.Items.Clear(); 
+        
+        for (int i = 0; i < urls.Count; i++) { 
+            if (_stopRequested) break; 
+            BatchStatus.Text = $"Downloading {i + 1}/{urls.Count}"; 
+            await StartDownload(urls[i], quality, format); 
+        } 
+        ToggleUI(false); 
+        BatchStatus.Text = "Finished"; 
+        BtnOpenFolder.Visibility = Visibility.Visible; 
+    }
+
     private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e) { try { Process.Start(new ProcessStartInfo { FileName = e.Uri.AbsoluteUri, UseShellExecute = true }); e.Handled = true; } catch { } }
-    private async Task CheckAndDownloadYtDlp() { if (!File.Exists(_ytDlpPath)) { Log("yt-dlp missing. Downloading..."); using var c = new HttpClient(); var d = await c.GetByteArrayAsync("https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"); await File.WriteAllBytesAsync(_ytDlpPath, d); } }
-    private async Task AutoUpdateYtDlp() { if (File.Exists(_ytDlpPath)) { try { var p = Process.Start(new ProcessStartInfo { FileName = _ytDlpPath, Arguments = "--update", CreateNoWindow = true }); if (p != null) await p.WaitForExitAsync(); } catch { } } }
-    private async void BtnDownload_Click(object sender, RoutedEventArgs e) { if (_isDownloading) return; var urls = UrlInput.Text.Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries).Select(u => u.Trim()).ToList(); if (!urls.Any()) return; ToggleUI(true); _stopRequested = false; LstLog.Items.Clear(); for (int i = 0; i < urls.Count; i++) { if (_stopRequested) break; BatchStatus.Text = $"Downloading {i + 1}/{urls.Count}"; await StartDownload(urls[i], (QualityCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "best"); } ToggleUI(false); BatchStatus.Text = "Finished"; BtnOpenFolder.Visibility = Visibility.Visible; }
+    
+    private async Task CheckAndDownloadYtDlp() { 
+        // MODIFIED: Add log if found[cite: 5]
+        if (!File.Exists(_ytDlpPath)) { 
+            Log("yt-dlp missing. Downloading..."); 
+            using var c = new HttpClient(); 
+            var d = await c.GetByteArrayAsync("https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"); 
+            await File.WriteAllBytesAsync(_ytDlpPath, d); 
+        } else {
+            Log("✅ yt-dlp found.");
+        }
+    }
+    
+    private async Task AutoUpdateYtDlp() { 
+        if (File.Exists(_ytDlpPath)) { 
+            // MODIFIED: Log update check[cite: 5]
+            Log("🔄 Checking for yt-dlp updates...");
+            try { 
+                var p = Process.Start(new ProcessStartInfo { FileName = _ytDlpPath, Arguments = "--update", CreateNoWindow = true }); 
+                if (p != null) await p.WaitForExitAsync(); 
+                Log("✅ yt-dlp is up to date.");
+            } catch { 
+                Log("⚠️ yt-dlp update check failed.");
+            } 
+        } 
+    }
+    
     private void BtnStop_Click(object sender, RoutedEventArgs e) { _stopRequested = true; if (_currentProcess != null) _currentProcess.Kill(true); }
     private void ToggleUI(bool d) { _isDownloading = d; BtnDownload.Visibility = d ? Visibility.Collapsed : Visibility.Visible; BtnStop.Visibility = d ? Visibility.Visible : Visibility.Collapsed; }
     private void Log(string m) { if (!Dispatcher.CheckAccess()) { Dispatcher.Invoke(() => Log(m)); return; } LstLog.Items.Add($"[{DateTime.Now:HH:mm:ss}] {m}"); LstLog.ScrollIntoView(LstLog.Items[LstLog.Items.Count - 1]); }

@@ -15,7 +15,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/> <!-- Row 0: Header -->
             <RowDefinition Height="Auto"/> <!-- Row 1: Batch Input -->
-            <RowDefinition Height="Auto"/> <!-- Row 2: Quality & Main Buttons -->
+            <RowDefinition Height="Auto"/> <!-- Row 2: Quality & Format Row -->
             <RowDefinition Height="Auto"/> <!-- Row 3: Advanced Toggle Section -->
             <RowDefinition Height="*"/>    <!-- Row 4: Logs & Progress -->
             <RowDefinition Height="Auto"/> <!-- Row 5: Footer (Links + Button) -->
@@ -41,7 +41,6 @@
                     <TextBox x:Name="UrlInput" Height="90" AcceptsReturn="True" TextWrapping="Wrap" 
                              VerticalScrollBarVisibility="Auto" Padding="10" FontSize="13" 
                              BorderBrush="#CCC" VerticalContentAlignment="Top"/>
-                    <!-- Multi-line Placeholder Logic -->
                     <TextBlock x:Name="Placeholder" Margin="11,11,0,0" Foreground="#AAA" 
                                IsHitTestVisible="False" VerticalAlignment="Top" FontSize="13">
                         <TextBlock.Style>
@@ -62,17 +61,20 @@
             </Grid>
         </StackPanel>
 
-        <!-- Quality & Action Row -->
+        <!-- Quality & Format Row -->
         <Grid Grid.Row="2" Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/> <!-- Quality Label + Combo -->
+                <ColumnDefinition Width="Auto"/> <!-- Format Label + Combo -->
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/> <!-- Download/Stop Buttons -->
             </Grid.ColumnDefinitions>
-            <StackPanel Orientation="Horizontal" Grid.Column="0">
-                <TextBlock Text="Quality:" VerticalAlignment="Center" Margin="0,0,12,0" Foreground="#444"/>
-                <ComboBox x:Name="QualityCombo" Width="230" Height="35" VerticalContentAlignment="Center">
-                    <ComboBoxItem Content="Best (Highest Available)" Tag="best" IsSelected="True"/>
+            
+            <!-- Quality Selection -->
+            <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="0,0,15,0">
+                <TextBlock Text="Quality:" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#444"/>
+                <ComboBox x:Name="QualityCombo" Width="170" Height="35" VerticalContentAlignment="Center">
+                    <ComboBoxItem Content="Best (Highest)" Tag="best" IsSelected="True"/>
                     <ComboBoxItem Content="8K (4320p)" Tag="4320"/>
                     <ComboBoxItem Content="4K (2160p)" Tag="2160"/>
                     <ComboBoxItem Content="2K (1440p)" Tag="1440"/>
@@ -80,10 +82,21 @@
                     <ComboBoxItem Content="720p" Tag="720"/>
                     <ComboBoxItem Content="480p" Tag="480"/>
                     <ComboBoxItem Content="360p" Tag="360"/>
-                    <ComboBoxItem Content="MP3 (Audio Only)" Tag="mp3"/>
                 </ComboBox>
             </StackPanel>
-            <Grid Grid.Column="2">
+
+            <!-- Video Format Selection -->
+            <StackPanel Orientation="Horizontal" Grid.Column="1">
+                <TextBlock Text="Format:" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#444"/>
+                <ComboBox x:Name="FormatCombo" Width="100" Height="35" VerticalContentAlignment="Center">
+                    <ComboBoxItem Content="Default" Tag="default" IsSelected="True"/>
+                    <ComboBoxItem Content="MP4" Tag="mp4"/>
+                    <ComboBoxItem Content="WebM" Tag="webm"/>
+                    <ComboBoxItem Content="MP3" Tag="mp3"/>
+                </ComboBox>
+            </StackPanel>
+
+            <Grid Grid.Column="3">
                 <Button x:Name="BtnDownload" Content="Download now" Click="BtnDownload_Click" Width="160" Height="40" Background="#0078D7" Foreground="White" FontWeight="Bold"/>
                 <Button x:Name="BtnStop" Content="Stop Batch" Click="BtnStop_Click" Width="160" Height="40" Background="#D32F2F" Foreground="White" FontWeight="Bold" Visibility="Collapsed"/>
             </Grid>
@@ -125,7 +138,7 @@
             </Grid>
         </GroupBox>
 
-        <!-- Footer Row: Community Links (Left) and Open Folder (Right) -->
+        <!-- Footer Row -->
         <Grid Grid.Row="5" Margin="0,15,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
