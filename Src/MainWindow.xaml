@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Universal Video Downloader" 
-        Height="750" Width="850" 
+        Height="820" Width="850" 
         Background="#F4F4F9" 
         WindowStartupLocation="CenterScreen"
         Icon="appicon.ico"
@@ -18,7 +18,7 @@
             <RowDefinition Height="Auto"/> <!-- Quality & Main Buttons -->
             <RowDefinition Height="Auto"/> <!-- Advanced Toggle Section -->
             <RowDefinition Height="*"/>    <!-- Logs & Progress -->
-            <RowDefinition Height="Auto"/> <!-- Footer -->
+            <RowDefinition Height="Auto"/> <!-- Footer: Links + Button -->
         </Grid.RowDefinitions>
 
         <!-- Header -->
@@ -29,7 +29,7 @@
             <TextBlock x:Name="BatchStatus" Text="Ready to download" Foreground="#0078D7" FontSize="12" Margin="0,5,0,0" FontWeight="SemiBold"/>
         </StackPanel>
 
-        <!-- URL Input Section (4 Lines high) -->
+        <!-- URL Input Section -->
         <StackPanel Grid.Row="1" Margin="0,0,0,20">
             <TextBlock Text="Enter Video URLs (one per line):" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="#444"/>
             <Grid>
@@ -37,14 +37,10 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-
                 <Grid Grid.Column="0">
-                    <!-- TextBox on bottom layer -->
                     <TextBox x:Name="UrlInput" Height="90" AcceptsReturn="True" TextWrapping="Wrap" 
                              VerticalScrollBarVisibility="Auto" Padding="10" FontSize="13" 
                              BorderBrush="#CCC" VerticalContentAlignment="Top"/>
-
-                    <!-- Placeholder on top layer -->
                     <TextBlock x:Name="Placeholder" Margin="11,11,0,0" Foreground="#AAA" 
                                IsHitTestVisible="False" VerticalAlignment="Top" FontSize="13">
                         <TextBlock.Style>
@@ -54,16 +50,12 @@
                                     <DataTrigger Binding="{Binding Text, ElementName=UrlInput}" Value="">
                                         <Setter Property="Visibility" Value="Visible"/>
                                     </DataTrigger>
-                                    <DataTrigger Binding="{Binding Text, ElementName=UrlInput}" Value="{x:Null}">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </TextBlock.Style>
                         https://www.youtube.com/watch?v=BLelz0cH7M8<LineBreak/>https://www.youtube.com/watch?v=jcHvPmTTirU<LineBreak/>https://www.youtube.com/watch?v=eGGUmoxvdAM
                     </TextBlock>
                 </Grid>
-
                 <Button Grid.Column="1" Content="Clear" Click="BtnClear_Click" 
                         Width="80" Margin="10,0,0,0" Height="90" Background="#E0E0E0"/>
             </Grid>
@@ -76,39 +68,44 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            
             <StackPanel Orientation="Horizontal" Grid.Column="0">
                 <TextBlock Text="Quality:" VerticalAlignment="Center" Margin="0,0,12,0" Foreground="#444"/>
-                <ComboBox x:Name="QualityCombo" Width="190" Height="35" VerticalContentAlignment="Center">
+                <ComboBox x:Name="QualityCombo" Width="230" Height="35" VerticalContentAlignment="Center">
                     <ComboBoxItem Content="Best (Highest Available)" Tag="best" IsSelected="True"/>
                     <ComboBoxItem Content="8K (4320p)" Tag="4320"/>
                     <ComboBoxItem Content="4K (2160p)" Tag="2160"/>
                     <ComboBoxItem Content="2K (1440p)" Tag="1440"/>
                     <ComboBoxItem Content="1080p" Tag="1080"/>
                     <ComboBoxItem Content="720p" Tag="720"/>
+                    <ComboBoxItem Content="480p" Tag="480"/>
+                    <ComboBoxItem Content="360p" Tag="360"/>
                     <ComboBoxItem Content="MP3 (Audio Only)" Tag="mp3"/>
                 </ComboBox>
             </StackPanel>
-
             <Grid Grid.Column="2">
                 <Button x:Name="BtnDownload" Content="Download now" Click="BtnDownload_Click" Width="160" Height="40" Background="#0078D7" Foreground="White" FontWeight="Bold"/>
                 <Button x:Name="BtnStop" Content="Stop Batch" Click="BtnStop_Click" Width="160" Height="40" Background="#D32F2F" Foreground="White" FontWeight="Bold" Visibility="Collapsed"/>
             </Grid>
         </Grid>
 
-        <!-- Advanced Toggle -->
+        <!-- Advanced Toggle Section -->
         <StackPanel Grid.Row="3" Margin="0,0,0,20">
             <TextBlock x:Name="BtnAdvancedToggle" Text="▶ Advanced Options" Foreground="#0078D7" 
                        Cursor="Hand" MouseLeftButtonDown="BtnAdvancedToggle_MouseLeftButtonDown" 
                        FontSize="12" Margin="0,0,0,5"/>
             <StackPanel x:Name="AdvancedPanel" Visibility="Collapsed">
-                <TextBlock Text="Additional yt-dlp parameters (e.g. --proxy URL):" FontSize="11" Foreground="#666" Margin="0,0,0,5"/>
-                <TextBox x:Name="AdvancedArgsInput" Height="30" VerticalContentAlignment="Center" Padding="5" FontSize="12"/>
+                <TextBox x:Name="AdvancedArgsInput" Height="30" VerticalContentAlignment="Center" Padding="5" FontSize="12" Margin="0,0,0,10"/>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Grab cookies from:" VerticalAlignment="Center" FontSize="11" Foreground="#666" Margin="0,0,10,0"/>
+                    <RadioButton x:Name="RbNone" Content="None" GroupName="CookiesGroup" IsChecked="True" FontSize="11" Margin="0,0,10,0"/>
+                    <RadioButton x:Name="RbFirefox" Content="Firefox" GroupName="CookiesGroup" FontSize="11" Margin="0,0,10,0" Checked="RbCookies_Checked"/>
+                    <RadioButton x:Name="RbChrome" Content="Chrome" GroupName="CookiesGroup" FontSize="11" Checked="RbCookies_Checked"/>
+                </StackPanel>
             </StackPanel>
         </StackPanel>
 
         <!-- Log & Progress -->
-        <GroupBox Grid.Row="4" Header="Log &amp; Progress (Double-click line to copy)" Padding="12" Background="White">
+        <GroupBox Grid.Row="4" Header="Log &amp; Progress" Padding="12" Background="White">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -117,8 +114,7 @@
                 </Grid.RowDefinitions>
                 <ProgressBar x:Name="PrgBar" Height="12" Margin="0,5,0,8" Minimum="0" Maximum="100" Foreground="#28A745"/>
                 <TextBlock x:Name="TxtStatus" Text="Ready" Margin="2,0,0,10" Foreground="#666" FontSize="12" FontStyle="Italic"/>
-                <ListBox x:Name="LstLog" Grid.Row="2" Background="#F8F9FA" FontSize="11" FontFamily="Consolas"
-                         MouseDoubleClick="LstLog_MouseDoubleClick">
+                <ListBox x:Name="LstLog" Grid.Row="2" Background="#F8F9FA" FontSize="11" FontFamily="Consolas" MouseDoubleClick="LstLog_MouseDoubleClick">
                     <ListBox.ContextMenu>
                         <ContextMenu>
                             <MenuItem Header="Copy Log Line" Click="MenuItemCopy_Click"/>
@@ -128,9 +124,37 @@
             </Grid>
         </GroupBox>
 
-        <!-- Footer -->
-        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
-            <Button x:Name="BtnOpenFolder" Content="📂 Open Downloads Folder" Click="BtnOpenFolder_Click" Padding="20,8" Background="#6C757D" Foreground="White" Visibility="Collapsed"/>
-        </StackPanel>
+        <!-- Footer: Links (Left) and Open Folder (Right) -->
+        <Grid Grid.Row="5" Margin="0,15,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Community Links (Aligned Left) -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock FontSize="12">
+                    <Hyperlink NavigateUri="https://www.reddit.com/r/youtubedl_gui/" RequestNavigate="Hyperlink_RequestNavigate">
+                        ❤️Join Community
+                    </Hyperlink>
+                </TextBlock>
+                <TextBlock Text="  |  " Foreground="#CCC" VerticalAlignment="Center"/>
+                <TextBlock FontSize="12">
+                    <Hyperlink NavigateUri="https://github.com/Dinesh6777/Universal-Video-Downloader-GUI/issues" RequestNavigate="Hyperlink_RequestNavigate">
+                        🐙Support
+                    </Hyperlink>
+                </TextBlock>
+                <TextBlock Text="  |  " Foreground="#CCC" VerticalAlignment="Center"/>
+                <TextBlock FontSize="12">
+                    <Hyperlink NavigateUri="https://github.com/Dinesh6777/Universal-Video-Downloader-GUI/blob/main/README.md#%EF%B8%8Fdonate" RequestNavigate="Hyperlink_RequestNavigate">
+                        ☕ Donate
+                    </Hyperlink>
+                </TextBlock>
+            </StackPanel>
+
+            <Button x:Name="BtnOpenFolder" Grid.Column="1" Content="📂 Open Downloads Folder" 
+                    Click="BtnOpenFolder_Click" Padding="20,8" Background="#6C757D" 
+                    Foreground="White" Visibility="Collapsed"/>
+        </Grid>
     </Grid>
 </Window>
