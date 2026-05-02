@@ -23,6 +23,9 @@ This utility provides a seamless way to download high-quality videos or entire p
 *   **FFmpeg Detection**: Built-in system check to ensure FFmpeg is available for high-quality audio/video merging.
 *   **Toggleable Advanced Options**: Includes a hidden panel to input custom parameters that are intelligently parsed into the downloader command.
 *   **Automated FFmpeg Installer**: Detects missing requirements and handles the download and extraction of ffmpeg.exe directly to the app folder.
+*   **Deno-Powered Cookie Support**: Automatically detects system architecture to install Deno, enabling advanced cookie extraction from Firefox and Chrome for age-restricted or private content.
+*   **Dynamic Video Format Selection**: dedicated dropdown to force output into MP4, WebM, or high-quality MP3 audio-only modes, alongside a smart "Default" option.
+*   **Intelligent Version Validator**: Performs a background check by parsing your local filename's version and cross-referencing it with the latest GitHub release tags.  
 
 ---
 
