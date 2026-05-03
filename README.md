@@ -3,7 +3,7 @@
 ![License](https://img.shields.io/badge/license-GPLv3-blue.svg)
 ![.NET](https://img.shields.io/badge/.NET-10.0-purple.svg)
 
-A portable, modern and simplistic graphical interface for the command line tool `yt-dlp` built with **C#** and **.NET 10 (WPF)** .
+A portable, modern and simplistic graphical interface for the command line tool [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) built with **C#** and **.NET 10 (WPF)** .
 This utility provides a seamless way to download high-quality videos or entire playlists from YouTube, Facebook, and hundreds of other supported platforms.
 
 <img width="600" height="500" alt="image" src="https://github.com/user-attachments/assets/ca293dd1-7f3e-4970-8abe-a701356af1ad" />
@@ -72,4 +72,4 @@ youtube downloader, youtube video downloader, free youtube downloader, youtube d
 ---
 ## 🛡️ Disclaimer
 
-This tool is a wrapper for `yt-dlp`. Users are responsible for ensuring their use of the software complies with the Terms of Service of the platforms they are downloading from and their local copyright laws.
+This tool is a wrapper for [`yt-dlp`](https://github.com/yt-dlp/yt-dlp). Users are responsible for ensuring their use of the software complies with the Terms of Service of the platforms they are downloading from and their local copyright laws.
