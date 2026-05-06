@@ -57,6 +57,18 @@ dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=
 * Ethereum(ERC20): 0x6CB452DAb1C580Cc1395dF68f80e071E27102146
 ---
 
+## ⚖️ Disclaimer
+UVD is only a graphical wrapper for yt-dlp.
+It does not modify yt-dlp or bypass its license.
+
+Please use this software responsibly and only download content you have the rights to (your own uploads, open-licensed media, personal archives, etc.).
+I do not endorse or encourage the unauthorized downloading of copyrighted material.
+
+## 🙏 Credits
+Built with ❤️ by me, in C#.Net.
+
+Powered by yt-dlp.
+
 ## ⚖️ License
 
 This project is licensed under the **GNU General Public License v3.0 (GPLv3)**.
