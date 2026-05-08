@@ -35,8 +35,18 @@ This utility provides a seamless way to download high-quality videos or entire p
 2.  **Choose Quality**: Select your preferred resolution from the dropdown menu.
 3.  **Download**: Click **Download Now**. The button will toggle to **Stop Download** while the process is running.
 4.  **Manage Files**: Once finished, click **Open Downloads Folder** to access your media.
-
 ---
+### Youtube Video : How to use Yt-dlp with Firefox cookies through Universal Video Downloader
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=Q1TSTdg3Xtg">
+    <img src="https://img.youtube.com/vi/Q1TSTdg3Xtg/maxresdefault.jpg" 
+         alt="Watch the video" 
+         width="640" 
+         height="360">
+  </a>
+</p>
+---
+
 ## 🛠️ Developer Build and Setup
 
 ### Prerequisites
