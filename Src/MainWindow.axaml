@@ -1,0 +1,143 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="UniversalVideoDownloader.MainWindow"
+        Title="Universal Video Downloader" 
+        Height="780" Width="850" 
+        Background="#F4F4F9" 
+        WindowStartupLocation="CenterScreen"
+        Icon="avares://Universal Video Downloader/appicon.ico">
+    
+    <Grid Margin="15,5,15,15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <RowDefinition Height="Auto"/> <RowDefinition Height="Auto"/> <RowDefinition Height="Auto"/> <RowDefinition Height="*"/> <RowDefinition Height="Auto"/> 
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,15">
+            <TextBlock Text="Universal Video Downloader" FontSize="28" FontWeight="Bold" Foreground="#222"/>
+            <TextBlock Text="Supports Youtube, Facebook, and more - Powered by yt-dlp" Foreground="#666" FontSize="12" Margin="0,2,0,0"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Margin="0,0,0,20">
+            <Grid Margin="0,0,0,8">
+                <TextBlock Text="Enter Video URLs (one per line):" FontWeight="SemiBold" Foreground="#444" VerticalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Paste" Click="BtnPaste_Click" Padding="12,4" FontSize="11" Background="#E0E0E0" Cursor="Hand" Margin="0,0,8,0"/>
+                    <Button Content="Clear" Click="BtnClear_Click" Padding="12,4" FontSize="11" Background="#E0E0E0" Cursor="Hand"/>
+                </StackPanel>
+            </Grid>
+            <Grid>
+                <TextBox x:Name="UrlInput" Height="100" AcceptsReturn="True" TextWrapping="Wrap" 
+                         Padding="10" FontSize="13" VerticalContentAlignment="Top"
+                         TextChanged="UrlInput_TextChanged"/>
+                <TextBlock x:Name="Placeholder" Margin="12,12,0,0" Foreground="#AAA" 
+                           IsHitTestVisible="False" VerticalAlignment="Top" FontSize="13"
+                           Text="https://www.youtube.com/watch?v=BLelz0cH7M8&#x0a;https://www.youtube.com/watch?v=jcHvPmTTirU&#x0a;(Supports 10000+ batch)"/>
+            </Grid>
+        </StackPanel>
+
+        <Grid Grid.Row="2" Margin="0,0,0,10" ColumnDefinitions="Auto, Auto, *, Auto">
+            <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="0,0,15,0">
+                <TextBlock Text="Quality:" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#444"/>
+                <ComboBox x:Name="QualityCombo" Width="170" Height="35" SelectedIndex="0">
+                    <ComboBoxItem Content="Best (Highest)" Tag="best"/>
+                    <ComboBoxItem Content="8K (4320p)" Tag="4320"/>
+                    <ComboBoxItem Content="4K (2160p)" Tag="2160"/>
+                    <ComboBoxItem Content="2K (1440p)" Tag="1440"/>
+                    <ComboBoxItem Content="1080p" Tag="1080"/>
+                    <ComboBoxItem Content="720p" Tag="720"/>
+                    <ComboBoxItem Content="480p" Tag="480"/>
+                    <ComboBoxItem Content="360p" Tag="360"/>
+                </ComboBox>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Grid.Column="1">
+                <TextBlock Text="Format:" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#444"/>
+                <ComboBox x:Name="FormatCombo" Width="100" Height="35" SelectedIndex="0">
+                    <ComboBoxItem Content="Default" Tag="default"/>
+                    <ComboBoxItem Content="MP4" Tag="mp4"/>
+                    <ComboBoxItem Content="WebM" Tag="webm"/>
+                    <ComboBoxItem Content="MP3" Tag="mp3"/>
+                </ComboBox>
+            </StackPanel>
+
+            <StackPanel Grid.Column="3" VerticalAlignment="Bottom" HorizontalAlignment="Right">
+                <Grid>
+                    <Button x:Name="BtnDownload" Content="Download now" Click="BtnDownload_Click" Width="160" Height="40" Background="#0078D7" Foreground="White" FontWeight="Bold" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                    <Button x:Name="BtnStop" Content="Stop Batch" Click="BtnStop_Click" Width="160" Height="40" Background="#D32F2F" Foreground="White" FontWeight="Bold" IsVisible="False" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                </Grid>
+            </StackPanel>
+        </Grid>
+
+        <StackPanel Grid.Row="3" Margin="0,0,0,15">
+            <TextBlock x:Name="BtnAdvancedToggle" Text="▶ Advanced Options" Foreground="#0078D7" 
+                       Cursor="Hand" PointerPressed="BtnAdvancedToggle_PointerPressed" 
+                       FontSize="12" Margin="0,0,0,5"/>
+            <StackPanel x:Name="AdvancedPanel" IsVisible="False">
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                    <TextBlock Text="Custom Arguments (e.g. --proxy URL) " FontSize="11" Foreground="#666" VerticalAlignment="Center"/>
+                    <TextBlock Foreground="#0078D7" Cursor="Hand" FontSize="11" Text="(View Documentation)" PointerPressed="Link_PointerPressed" Tag="https://github.com/yt-dlp/yt-dlp#usage-and-options" VerticalAlignment="Center"/>
+                </StackPanel>
+                <TextBox x:Name="AdvancedArgsInput" Height="30" Padding="5" FontSize="12" Margin="0,0,0,10"/>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Grab cookies from:" VerticalAlignment="Center" FontSize="11" Foreground="#666" Margin="0,0,10,0"/>
+                    <RadioButton x:Name="RbNone" Content="None" GroupName="CookiesGroup" IsChecked="True" FontSize="11" Margin="0,0,10,0"/>
+                    <RadioButton x:Name="RbFirefox" Content="Firefox" GroupName="CookiesGroup" FontSize="11" Margin="0,0,10,0" IsCheckedChanged="RbCookies_Checked"/>
+                    <RadioButton x:Name="RbChrome" Content="Chrome" GroupName="CookiesGroup" FontSize="11" IsCheckedChanged="RbCookies_Checked"/>
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+
+        <Grid Grid.Row="4" RowDefinitions="Auto, *">
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,5">
+                <TextBlock Text="Log &amp; Progress : " FontWeight="SemiBold" Foreground="#444"/>
+                <TextBlock x:Name="BatchStatus" Text="Ready to download" Foreground="#0078D7" FontWeight="SemiBold"/>
+            </StackPanel>
+            
+            <Border Grid.Row="1" BorderBrush="#CCC" BorderThickness="1" Background="White" Padding="12" CornerRadius="4">
+                <Grid RowDefinitions="Auto, Auto, *">
+                    <ProgressBar x:Name="PrgBar" Height="12" Margin="0,5,0,8" Minimum="0" Maximum="100" Foreground="#28A745"/>
+                    <TextBlock Grid.Row="1" x:Name="TxtStatus" Text="Ready" Margin="2,0,0,10" Foreground="#666" FontSize="12" FontStyle="Italic"/>
+                    <ListBox Grid.Row="2" x:Name="LstLog" Background="#F8F9FA" FontSize="11" FontFamily="Consolas" 
+                             DoubleTapped="LstLog_DoubleTapped" ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                        <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="Padding" Value="4,2"/>
+                                <Setter Property="MinHeight" Value="16"/>
+                            </Style>
+                        </ListBox.Styles>
+                        <ListBox.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Copy Selected Line" Click="MenuItemCopy_Click"/>
+                                <MenuItem Header="Copy All Logs" Click="MenuItemCopyAll_Click"/>
+                            </ContextMenu>
+                        </ListBox.ContextMenu>
+                    </ListBox>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Grid Grid.Row="5" Margin="0,15,0,0" ColumnDefinitions="*, Auto">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Foreground="#0078D7" Cursor="Hand" FontSize="12" Text="❤️Join Community" PointerPressed="Link_PointerPressed" Tag="https://www.reddit.com/r/youtubedl_gui/"/>
+                <TextBlock Text="  |  " Foreground="#CCC" VerticalAlignment="Center"/>
+                <TextBlock Foreground="#0078D7" Cursor="Hand" FontSize="12" Text="🐙Support" PointerPressed="Link_PointerPressed" Tag="https://github.com/Dinesh6777/Universal-Video-Downloader-GUI/issues"/>
+                <TextBlock Text="  |  " Foreground="#CCC" VerticalAlignment="Center"/>
+                <TextBlock Foreground="#0078D7" Cursor="Hand" FontSize="12" Text="☕ Donate" PointerPressed="Link_PointerPressed" Tag="https://github.com/Dinesh6777/Universal-Video-Downloader-GUI/blob/main/README.md#%EF%B8%8Fdonate"/>
+            </StackPanel>
+            <Button x:Name="BtnOpenFolder" Grid.Column="1" Content="📂 Open Downloads Folder" Click="BtnOpenFolder_Click" Padding="20,8" Background="#6C757D" Foreground="White" IsVisible="False"/>
+        </Grid>
+
+        <Grid x:Name="DialogOverlay" RowSpan="6" Background="#80000000" IsVisible="False">
+            <Border Background="White" CornerRadius="8" Padding="20" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="400">
+                <StackPanel>
+                    <TextBlock x:Name="DialogTitle" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
+                    <TextBlock x:Name="DialogMessage" TextWrapping="Wrap" Margin="0,0,0,20"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="DialogBtnYes" Content="Yes" Click="DialogYes_Click" Background="#0078D7" Foreground="White" Margin="0,0,10,0" Padding="15,5"/>
+                        <Button x:Name="DialogBtnNo" Content="No" Click="DialogNo_Click" Background="#E0E0E0" Padding="15,5"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>
