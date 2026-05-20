@@ -82,13 +82,7 @@ Built with ❤️ in C#.Net.
 Powered by yt-dlp.
 
 ## ⚖️ License
-
-This project is licensed under the **GNU General Public License v3.0 (GPLv3)**.
-
-### GPLv3 Summary:
-*   **Permissions**: Commercial use, modification, and distribution are allowed.
-*   **Conditions**: The source code must be made available under the same license when distributed.
-*   **Limitations**: The software is provided with no warranty or liability.
+This project is licensed under the **MIT License** - see the [LICENSE](https://github.com/Dinesh6777/Universal-Video-Downloader-GUI/blob/main/LICENSE) file for details.
 
 ## SEO keyword list:
 youtube downloader, youtube video downloader, free youtube downloader, youtube downloader software, yt downloader, download youtube videos, yt-dlp gui, yt-dlp wrapper, youtube downloader gui, video downloader for pc, youtube to mp4 downloader, youtube to mp3 converter, open source youtube downloader, best youtube downloader 2026, fast youtube downloader, batch youtube download, playlist downloader youtube, 4k youtube downloader alternative, yt-dlp frontend, cross platform youtube downloader, windows youtube downloader, mac youtube downloader, linux youtube downloader, safe youtube downloader, no ads youtube downloader, command line youtube downloader, gui for yt-dlp, youtube downloader app, high quality youtube download, hd video downloader youtube, youtube subtitles downloader, youtube audio extractor, youtube playlist downloader software, youtube batch downloader
