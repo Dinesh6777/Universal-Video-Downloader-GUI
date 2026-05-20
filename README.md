@@ -77,7 +77,7 @@ Please use this software responsibly and only download content you have the righ
 I do not endorse or encourage the unauthorized downloading of copyrighted material.
 
 ## 🙏 Credits
-Built with ❤️ by me, in C#.Net.
+Built with ❤️ in C#.Net.
 
 Powered by yt-dlp.
 
