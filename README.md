@@ -14,7 +14,7 @@ Youtube Demo : https://www.youtube.com/watch?v=D62cByaoq30
 ## [Download - check releases here](https://github.com/Dinesh6777/Universal-Video-Downloader-GUI/releases)
 ---
 ## 🚀 Key Features
-
+*   Supports Android, Windows, Linux and Mac Platforms. A lightweight Android video downloader powered by yt-dlp with auto-engine updates, 8K & MP3 extraction, playlist auto-sorting, and seamless public storage access.
 *   **Multi-platform support** - Download from YouTube, Vimeo, Facebook, Instagram, TikTok, and 1000+ sites. Leverages the power of `yt-dlp` to download media from almost any video-sharing site.
 *   **Intelligent Playlist Handling**: Automatically creates a dedicated subfolder for playlists and prefixes files with their index for perfect organization.
 *   **Manual Control**: Features a dedicated "Stop Download" button that safely terminates the process tree, including active FFmpeg merges.
