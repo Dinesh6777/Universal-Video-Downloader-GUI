@@ -3,7 +3,7 @@
 ![License](https://img.shields.io/badge/license-GPLv3-blue.svg)
 ![.NET](https://img.shields.io/badge/.NET-10.0-purple.svg)
 
-A portable, modern and simplistic graphical interface for the command line tool [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) built with **C#** and **.NET 10 (WPF)** .
+A portable, modern and simplistic graphical interface for the command line tool [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) built with **C#** and **.NET 10 (WPF)** for Windows, Linux and Mac Builds and Kotlin for Android Mobile build.
 This utility provides a seamless way to download high-quality videos or entire playlists from YouTube, Facebook, and hundreds of other supported platforms.
 
 Youtube Demo : https://www.youtube.com/watch?v=D62cByaoq30
