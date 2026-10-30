@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Universal Video Downloader</string>
+    <string name="download_service_label">Download Service</string>
+    <string name="download_service_desc">Downloading media files in the background</string>
+    <string name="channel_name">Download Progress</string>
+    <string name="channel_desc">Real-time notifications for active downloads</string>
+</resources>
